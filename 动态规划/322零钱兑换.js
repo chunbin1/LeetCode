@@ -6,34 +6,23 @@
  *  dp[n] = min(dp[n-x1],dp[n-x2],dp[n-x3]) + 1
  */
 
-
-// 击败百分之5js选手....
 /**
-* @param {number[]} coins
-* @param {number} amount
-* @return {number}
-*/
+ * @param {number[]} coins
+ * @param {number} amount
+ * @return {number}
+ */
 var coinChange = function (coins, amount) {
-  if (amount === 0) return 0
-  const dp = {}
-  coins.forEach((val) => {
-    dp[val] = 1
-  })
-  let i = Math.min(...coins)
-  for (; i <= amount; i++) {
-    if (dp[i]) {
-      continue
-    } else {
-      // dp[i] = Math.min()
-      const tmpCoins = coins.map((val) => {
-        return (dp[i - val] === -1 || dp[i - val] === undefined) ? Infinity : dp[i - val]
+  if (amount === 0) return 0;
+  const dp = [0]; // 0是不用的，dp[i]表示需要多少个硬币换i元
+  for (let i = 1; i <= amount; i++) {
+    dp[i] = amount + 1; // 初始化特别大
+    for (let j = 0, len = coins.length; j < len; j++) {
+      if (i - coins[j] >= 0) {
+        dp[i] = Math.min(dp[i], dp[i - coins[j]] + 1);
       }
-      )
-      const res = Math.min(...tmpCoins)
-      dp[i] = res !== Infinity ? res + 1 : -1;
     }
   }
-  return dp[amount] || -1
+  return dp[amount] > amount ? -1 : dp[amount];
 };
 
-coinChange([2], 4)
+coinChange([2], 3);
