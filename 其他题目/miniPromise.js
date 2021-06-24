@@ -52,7 +52,6 @@ class MyPromise {
   };
 
   then = (onFulfilled, onRejected) => {
-    debugger
     // onFulfilled、onRejected 是可选参数。如果 onFulfilled 不是函数，则必须忽略它；如果 onRejected 不是函数，则必须忽略它；
     onFulfilled = typeof onFulfilled === 'function' ? onFulfilled : (value) => value;
     onRejected =
