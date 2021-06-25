@@ -1,4 +1,5 @@
 // 来自于https://juejin.cn/post/6973155726302642206#heading-22的文章
+// https://juejin.cn/post/6945319439772434469 
 
 // Promise 3 种状态
 const STATUS = {
@@ -61,28 +62,46 @@ class MyPromise {
             throw error;
           };
 
-    let resolve
-    let reject 
+    let resolve;
+    let reject;
     // 弄个新的Promise
     const promise2 = new MyPromise((_resolve, _reject) => {
-      resolve = _resolve
+      resolve = _resolve;
     });
 
+    const fulfilledMicrotask = () => {
+      // 创建一个微任务等待 promise2 完成初始化
+      queueMicrotask(() => {
+        try {
+          const x = onFulfilled(this.value);
+          resolvePromise(promise2, x, resolve, reject);
+        } catch (e) {
+          reject(e);
+        }
+      });
+    };
+
+    const rejectedMicrotask = () => {
+      // 创建一个微任务等待 promise2 完成初始化
+      queueMicrotask(() => {
+        try {
+          // 调用失败回调，并且把原因返回
+          const x = realOnRejected(this.reason);
+          // 传入 resolvePromise 集中处理
+          resolvePromise(promise2, x, resolve, reject);
+        } catch (e) {
+          reject(e);
+        }
+      });
+    };
+
     if (this.status === STATUS.PENDING) {
-      this.onFulfilledCallback.push(() => {
-        const x = onFulfilled(this.value);
-        resolvePromise(promise2, x, resolve, reject);
-      });
-      this.onRejectedCallback.push(() => {
-        const x = onRejected(this.value);
-        resolvePromise(promise2, x, resolve, reject);
-      });
+      this.onFulfilledCallback.push(fulfilledMicrotask);
+      this.onRejectedCallback.push(rejectedMicrotask);
     } else if (this.status === STATUS.FULFILLED) {
-      const x = onFulfilled(this.value);
-      resolvePromise(promise2, x, resolve, reject);
+      fulfilledMicrotask()
     } else if (this.status === STATUS.REJECTED) {
-      const x = onRejected(this.error);
-      resolvePromise(promise2, x, resolve, reject);
+      rejectedMicrotask()
     }
 
     return promise2;
@@ -90,7 +109,6 @@ class MyPromise {
 }
 
 function resolvePromise(promise2, x, resolve, reject) {
-  debugger
   // 如果 promise2 === x， 执行 reject，错误原因为 TypeError
   if (promise2 === x) {
     reject(new TypeError('The promise and the return value are the same'));
@@ -127,34 +145,20 @@ function resolvePromise(promise2, x, resolve, reject) {
   }
 }
 
-const mypromise = new MyPromise((resolve, reject) => {
-  resolve('成功');
-});
+const promise = new MyPromise((resolve, reject) => {
+  resolve('直接结束')
+  // setTimeout(() => {
+  //   resolve('success')
+  // }, 2000); 
+})
 
-const mypromise2 = new MyPromise((resolve, reject) => {
-  resolve('成功2');
-});
+console.log(promise);
+debugger
+promise.then(value => {
+  console.log('resolve', value)
+}, reason => {
+  console.log('reject', reason)
+})
 
-mypromise
-  .then((data) => {
-    console.log(data, '1');
-    return mypromise2
-  }).then(data=>{
-    console.log(data,'2')
+console.log('主程序')
 
-  })
-// const promise = new Promise(function(resolve, reject) {
-//   // ... some code
-
-//   if (/* 异步操作成功 */){
-//     resolve(value);
-//   } else {
-//     reject(error);
-//   }
-// });
-
-// promise.then(data => {
-//     console.log('请求成功')
-// }, err => {
-//     console.log('请求失败'）
-// })
