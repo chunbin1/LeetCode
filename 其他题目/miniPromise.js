@@ -1,5 +1,5 @@
 // 来自于https://juejin.cn/post/6973155726302642206#heading-22的文章
-// https://juejin.cn/post/6945319439772434469 
+// https://juejin.cn/post/6945319439772434469
 
 // Promise 3 种状态
 const STATUS = {
@@ -27,6 +27,25 @@ class MyPromise {
 
   // 失败回调
   onRejectedCallback = [];
+
+  static resolve(parameter) {
+    // 如果传入 MyPromise 就直接返回
+    if (parameter instanceof MyPromise) {
+      return parameter;
+    }
+
+    // 转成常规方式
+    return new MyPromise((resolve) => {
+      resolve(parameter);
+    });
+  }
+
+  // reject 静态方法
+  static reject(reason) {
+    return new MyPromise((resolve, reject) => {
+      reject(reason);
+    });
+  }
 
   // 修改 Promise 状态，并定义成功返回值
   resolve = (value) => {
@@ -99,9 +118,9 @@ class MyPromise {
       this.onFulfilledCallback.push(fulfilledMicrotask);
       this.onRejectedCallback.push(rejectedMicrotask);
     } else if (this.status === STATUS.FULFILLED) {
-      fulfilledMicrotask()
+      fulfilledMicrotask();
     } else if (this.status === STATUS.REJECTED) {
-      rejectedMicrotask()
+      rejectedMicrotask();
     }
 
     return promise2;
@@ -145,20 +164,13 @@ function resolvePromise(promise2, x, resolve, reject) {
   }
 }
 
-const promise = new MyPromise((resolve, reject) => {
-  resolve('直接结束')
-  // setTimeout(() => {
-  //   resolve('success')
-  // }, 2000); 
-})
+MyPromise.deferred = function () {
+  var result = {};
+  result.promise = new MyPromise(function (resolve, reject) {
+    result.resolve = resolve;
+    result.reject = reject;
+  });
 
-console.log(promise);
-debugger
-promise.then(value => {
-  console.log('resolve', value)
-}, reason => {
-  console.log('reject', reason)
-})
-
-console.log('主程序')
-
+  return result;
+}
+module.exports = MyPromise;
